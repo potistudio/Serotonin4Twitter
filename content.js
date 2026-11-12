@@ -221,6 +221,30 @@
     if (!st.active) return;
     const main = document.querySelector('main');
     const col = column();
+    // ユーザー報告の実DOM位置を直接隠す（testidなしの素div対策）。位置がずれても外側のfixed枠ごと消す。
+    try {
+      const xp = "/html/body/div[1]/div/div/div[1]/div/div[2]/div";
+      const node = document.evaluate(xp, document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+      if (node instanceof Element) {
+        const r0 = node.getBoundingClientRect();
+        const atCorner = r0.right >= window.innerWidth - 300 && r0.bottom > window.innerHeight - 500;
+        const small = r0.width <= 460 && r0.height <= 560;
+        const txt = (node.textContent || '').slice(0, 200);
+        const looksDM = /\u30e1\u30c3\u30bb\u30fc\u30b8|Messages|\u65b0\u3057\u3044\u30e1\u30c3\u30bb\u30fc\u30b8/i.test(txt) ||
+          !!node.querySelector?.('[data-testid*="DM" i], [data-testid*="Message" i], a[href^="/messages"]');
+        if ((atCorner && small) || looksDM) {
+          hideEl(node);
+          let cur = node;
+          for (let i = 0; i < 6 && cur && cur !== document.body; i++) {
+            try { if (getComputedStyle(cur).position === 'fixed') { hideEl(cur); break; } } catch { /* noop */ }
+            const r = cur.getBoundingClientRect();
+            if (r.width && r.height && r.width <= 420 && r.height <= 520) hideEl(cur);
+            cur = cur.parentElement;
+            if (cur?.id === 'react-root') break;
+          }
+        }
+      }
+    } catch { /* noop */ }
     const skipSel = '#tcs-hud, [data-testid="primaryColumn"], [data-testid="sidebarColumn"], header[role="banner"], [role="dialog"], [aria-modal="true"]';
     let known;
     try {
