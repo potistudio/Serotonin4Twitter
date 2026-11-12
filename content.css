@@ -65,16 +65,32 @@ html[data-tcs-style="none"] [data-tcs-anim] { animation: none !important; }
   [data-tcs-anim] { animation: none !important; }
 }
 
-/* ---- フォーカスモード：サイドバーを消して左ナビを薄くする ---- */
-html[data-tcs="on"][data-tcs-focus] [data-testid="sidebarColumn"] {
-  opacity: 0 !important;
-  pointer-events: none !important;
-  transition: opacity 0.2s;
+/* ---- ポスト以外の要素の非表示 ---- */
+/* data-tcs-hide は content.js がタイムラインの祖先経路から外れた要素に付ける。
+   既知の要素はセレクタでも指定し、content.js の次回判定（最大 300ms 後）を待たずに非表示にする */
+html[data-tcs="on"] [data-tcs-hide],
+html[data-tcs="on"] header[role="banner"],
+html[data-tcs="on"] [data-testid="sidebarColumn"],
+html[data-tcs="on"] [data-testid="BottomBar"],
+html[data-tcs="on"] [data-testid="DMDrawer"] {
+  display: none !important;
 }
-html[data-tcs="on"][data-tcs-focus] header[role="banner"] {
-  opacity: 0.25;
-  transition: opacity 0.2s;
+
+/* 左右のカラムが消えて空いた幅を祖先経路に広げ、タイムラインを画面中央に置く */
+html[data-tcs="on"] [data-tcs-path] {
+  flex-grow: 1 !important;
+  width: 100% !important;
+  max-width: none !important;
 }
-html[data-tcs="on"][data-tcs-focus] header[role="banner"]:hover {
-  opacity: 1;
+html[data-tcs="on"] [data-testid="primaryColumn"] {
+  margin-inline: auto !important;
+}
+
+/* タイムラインの左右の枠線を消す。X は primaryColumn とその内側の入れ物に左右の border を付けるため、
+   祖先経路・primaryColumn・primaryColumn 内でセル群を含む要素を対象にする（セル自体は含めない） */
+html[data-tcs="on"] [data-tcs-path],
+html[data-tcs="on"] [data-testid="primaryColumn"],
+html[data-tcs="on"] [data-testid="primaryColumn"] :has([data-testid="cellInnerDiv"]) {
+  border-left-width: 0 !important;
+  border-right-width: 0 !important;
 }

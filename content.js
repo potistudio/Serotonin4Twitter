@@ -11,7 +11,7 @@
   if (window.__tcsLoaded) return;
   window.__tcsLoaded = true;
 
-  const DEFAULTS = { enabled: true, animation: 'slide-x', focus: false };
+  const DEFAULTS = { enabled: true, animation: 'slide-x' };
   const SEL = {
     column: '[data-testid="primaryColumn"]',
     cell: '[data-testid="cellInnerDiv"]',
@@ -20,6 +20,8 @@
   };
   const ATTR_CUR = 'data-tcs-current';
   const ATTR_ANIM = 'data-tcs-anim';
+  const ATTR_HIDE = 'data-tcs-hide';
+  const ATTR_PATH = 'data-tcs-path';
   const GAP = 12; // ヘッダーとカードの隙間
   const HUD_SPACE = 72; // 画面下の操作バー分の余白
   const MIN_CARD_HEIGHT = 16; // これ未満の高さのセルはカードとして扱わない
@@ -69,7 +71,6 @@
   }
   function applySettings() {
     root.setAttribute('data-tcs-style', settings.animation);
-    root.toggleAttribute('data-tcs-focus', !!settings.focus);
     hud.setAxis(settings.animation === 'slide-x' ? 'x' : 'y');
     evaluate();
   }
@@ -152,15 +153,71 @@
     return best;
   }
 
+  /**
+   * 画面下端に固定された BottomBar の高さを返す。
+   * display:none の要素は矩形が全て 0 になり top=0 が画面全体の高さとして計算されるため、高さ 0 は不在として扱う
+   */
+  function footerHeight() {
+    const r = document.querySelector(SEL.bottomBar)?.getBoundingClientRect();
+    return r?.height ? Math.max(0, window.innerHeight - r.top) : 0;
+  }
+
   /** カードを置ける縦の範囲（ビューポート座標） */
   function bounds() {
     const t = now();
     if (t - st.header.at > 1500) st.header = { value: measureHeader(), at: t };
-    const bb = document.querySelector(SEL.bottomBar);
-    const footer = bb ? Math.max(0, window.innerHeight - bb.getBoundingClientRect().top) : 0;
+    const footer = footerHeight();
     const top = st.header.value + GAP;
     const bottom = window.innerHeight - footer - HUD_SPACE;
     return { top, bottom, avail: Math.max(120, bottom - top), footer };
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* ポスト以外の要素の非表示                                              */
+  /* ------------------------------------------------------------------ */
+  // Xの要素は React が管理しており DOM から取り除くと再描画が破綻するため、属性を付けて CSS の display:none で非表示にする
+  let hiddenEls = new Set();
+  let pathEls = new Set();
+
+  /** #layers はモーダル・メニュー・トーストの描画先のため、それを含む要素は非表示にしない */
+  function mustKeep(el, layers) {
+    return el.id === 'tcs-hud' || el.matches('script, style, link') || (!!layers && el.contains(layers));
+  }
+
+  function syncAttr(prev, next, attr) {
+    for (const el of prev) if (!next.has(el)) el.removeAttribute(attr);
+    for (const el of next) if (!prev.has(el)) el.setAttribute(attr, '');
+    return next;
+  }
+
+  /**
+   * タイムラインのセル群から #react-root までの祖先経路を求め、経路上にない兄弟要素を全て非表示にする。
+   * 経路上の祖先には ATTR_PATH を付け、左右のカラムが消えた分の幅をタイムラインの中央寄せに使う。
+   * 非アクティブ時は空集合と同期し、付けた属性を全て外す
+   */
+  function isolateTimeline() {
+    const hide = new Set();
+    const path = new Set();
+    const col = column();
+    const cell = st.active ? col?.querySelector(SEL.cell) : null;
+    const stop = document.getElementById('react-root') || document.body;
+    if (cell && stop.contains(cell)) {
+      const layers = document.getElementById('layers');
+      for (let n = cell.parentElement; n !== stop; n = n.parentElement) {
+        for (const sib of n.parentElement.children) {
+          if (sib !== n && !mustKeep(sib, layers)) hide.add(sib);
+        }
+      }
+      for (let n = col.parentElement; n && n !== stop; n = n.parentElement) path.add(n);
+    }
+    const changed = hide.size !== hiddenEls.size || [...hide].some((el) => !hiddenEls.has(el));
+    hiddenEls = syncAttr(hiddenEls, hide, ATTR_HIDE);
+    pathEls = syncAttr(pathEls, path, ATTR_PATH);
+    if (changed) {
+      // 非表示にした要素の分だけカードの位置とヘッダー高さが変わるため、計測値を破棄して再配置させる
+      st.header.at = -1e9;
+      st.lastAlignAt = 0;
+    }
   }
 
   /* ------------------------------------------------------------------ */
@@ -508,6 +565,7 @@
   function activate() {
     st.active = true;
     root.setAttribute('data-tcs', 'on');
+    isolateTimeline();
     st.header.at = -1e9;
     pickInitial();
   }
@@ -515,6 +573,7 @@
     st.active = false;
     st.loading = false;
     root.removeAttribute('data-tcs');
+    isolateTimeline();
     setTopPad(0);
     clearCurrent();
   }
@@ -530,7 +589,11 @@
     const want = eligible && settings.enabled;
     if (want && !st.active) activate();
     else if (!want && st.active) deactivate();
-    else if (want && !st.loading && !st.current?.isConnected) pickInitial();
+    else if (want) {
+      // X はルート遷移や追加読み込みで要素を差し替えるため、毎回非表示対象を求め直す
+      isolateTimeline();
+      if (!st.loading && !st.current?.isConnected) pickInitial();
+    }
     hud.setVisible(eligible);
     hud.update();
   }
@@ -640,9 +703,7 @@
         const col = column();
         const r = col?.getBoundingClientRect();
         if (r && r.width) wrap.style.left = `${r.left + r.width / 2}px`;
-        const bb = document.querySelector(SEL.bottomBar);
-        const footer = bb ? Math.max(0, window.innerHeight - bb.getBoundingClientRect().top) : 0;
-        wrap.style.bottom = `${footer + 16}px`;
+        wrap.style.bottom = `${footerHeight() + 16}px`;
       },
       setDark(d) { wrap.classList.toggle('dark', d); },
       setAxis(a) { wrap.classList.toggle('axis-x', a === 'x'); },
