@@ -1,0 +1,75 @@
+/* ===== TL Card Slider ===== */
+
+/* 今のカード以外は透明化するやで（レイアウトはXのまま触らん） */
+html[data-tcs="on"] [data-testid="primaryColumn"] [data-testid="cellInnerDiv"]:not([data-tcs-current]) {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+html[data-tcs="on"] [data-tcs-current] {
+  z-index: 1;
+}
+
+/* カードの見た目（cellInnerDiv 本体は transform で位置決めされとるから、子要素に当てる） */
+html[data-tcs="on"] [data-tcs-current] > div {
+  border-radius: 16px;
+  overflow: hidden;
+  background-color: var(--tcs-card-bg, #fff);
+  box-shadow: 0 0 0 1px var(--tcs-line, rgba(15, 20, 25, 0.1)),
+    0 14px 36px var(--tcs-shadow, rgba(15, 20, 25, 0.16));
+}
+
+/* ---- 出現アニメーション ---- */
+[data-tcs-anim] {
+  animation-duration: 0.3s;
+  animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation-fill-mode: both;
+}
+[data-tcs-anim="enter"] { animation-name: tcs-fade; }
+
+html[data-tcs-style="slide-x"] [data-tcs-anim="next"] { animation-name: tcs-from-right; }
+html[data-tcs-style="slide-x"] [data-tcs-anim="prev"] { animation-name: tcs-from-left; }
+html[data-tcs-style="slide-y"] [data-tcs-anim="next"] { animation-name: tcs-from-bottom; }
+html[data-tcs-style="slide-y"] [data-tcs-anim="prev"] { animation-name: tcs-from-top; }
+html[data-tcs-style="fade"] [data-tcs-anim="next"],
+html[data-tcs-style="fade"] [data-tcs-anim="prev"] { animation-name: tcs-fade; }
+html[data-tcs-style="none"] [data-tcs-anim] { animation: none !important; }
+
+@keyframes tcs-from-right {
+  from { transform: translateX(56px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes tcs-from-left {
+  from { transform: translateX(-56px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes tcs-from-bottom {
+  from { transform: translateY(44px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes tcs-from-top {
+  from { transform: translateY(-44px) scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+@keyframes tcs-fade {
+  from { transform: scale(0.97); opacity: 0; }
+  to   { transform: none; opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-tcs-anim] { animation: none !important; }
+}
+
+/* ---- フォーカスモード：サイドバーを消して左ナビを薄くする ---- */
+html[data-tcs="on"][data-tcs-focus] [data-testid="sidebarColumn"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transition: opacity 0.2s;
+}
+html[data-tcs="on"][data-tcs-focus] header[role="banner"] {
+  opacity: 0.25;
+  transition: opacity 0.2s;
+}
+html[data-tcs="on"][data-tcs-focus] header[role="banner"]:hover {
+  opacity: 1;
+}

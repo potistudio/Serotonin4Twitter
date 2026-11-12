@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>TL Card Slider</title>
+  <style>
+    :root {
+      --fg: #0f1419; --sub: #536471; --bg: #fff; --line: #eff3f4; --accent: #1d9bf0; --knob: #fff; --off: #cfd9de;
+      color-scheme: light dark;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root { --fg: #e7e9ea; --sub: #8b98a5; --bg: #15181c; --line: #2f3336; --off: #3e4144; }
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; width: 300px; background: var(--bg); color: var(--fg);
+      font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", "Hiragino Sans", "Noto Sans JP", sans-serif;
+    }
+    header { display: flex; align-items: center; gap: 10px; padding: 14px 16px 10px; }
+    header img { width: 28px; height: 28px; }
+    h1 { font-size: 15px; margin: 0; }
+    .row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+      padding: 12px 16px; border-top: 1px solid var(--line);
+    }
+    .row small { display: block; color: var(--sub); font-size: 12px; }
+    select {
+      font: inherit; color: var(--fg); background: var(--bg);
+      border: 1px solid var(--off); border-radius: 8px; padding: 4px 6px;
+    }
+    .switch { position: relative; width: 40px; height: 24px; flex: none; }
+    .switch input { opacity: 0; position: absolute; inset: 0; margin: 0; cursor: pointer; }
+    .switch span {
+      position: absolute; inset: 0; border-radius: 999px; background: var(--off);
+      transition: background .15s; pointer-events: none;
+    }
+    .switch span::after {
+      content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px;
+      border-radius: 50%; background: var(--knob); transition: transform .15s;
+      box-shadow: 0 1px 3px rgba(0,0,0,.25);
+    }
+    .switch input:checked + span { background: var(--accent); }
+    .switch input:checked + span::after { transform: translateX(16px); }
+    .switch input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .keys { padding: 10px 16px 14px; border-top: 1px solid var(--line); color: var(--sub); font-size: 12px; }
+    .keys dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 6px 0 0; }
+    .keys dt { color: var(--fg); }
+    .keys dd { margin: 0; }
+    kbd {
+      font: 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+      border: 1px solid var(--off); border-bottom-width: 2px; border-radius: 4px; padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="icons/icon48.png" alt="" />
+    <h1>TL Card Slider</h1>
+  </header>
+
+  <label class="row">
+    <div>カード表示<small>タイムラインを1枚ずつ表示</small></div>
+    <span class="switch"><input type="checkbox" id="enabled" /><span></span></span>
+  </label>
+
+  <div class="row">
+    <label for="animation">切り替えアニメーション</label>
+    <select id="animation">
+      <option value="slide-x">横スライド</option>
+      <option value="slide-y">縦スライド</option>
+      <option value="fade">フェード</option>
+      <option value="none">なし</option>
+    </select>
+  </div>
+
+  <label class="row">
+    <div>フォーカスモード<small>右サイドバーを隠し、左メニューを薄く</small></div>
+    <span class="switch"><input type="checkbox" id="focus" /><span></span></span>
+  </label>
+
+  <div class="keys">
+    操作
+    <dl>
+      <dt><kbd>↓</kbd> <kbd>→</kbd> <kbd>J</kbd> <kbd>Space</kbd></dt><dd>次のポスト</dd>
+      <dt><kbd>↑</kbd> <kbd>←</kbd> <kbd>K</kbd></dt><dd>前のポスト</dd>
+      <dt>ホイール / スワイプ</dt><dd>1回で1枚</dd>
+      <dt><kbd>L</kbd> <kbd>R</kbd> <kbd>T</kbd></dt><dd>いいね / 返信 / リポスト（Xの標準）</dd>
+      <dt><kbd>Alt</kbd>+<kbd>S</kbd></dt><dd>カード表示のON/OFF</dd>
+    </dl>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

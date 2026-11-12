@@ -1,5 +1,53 @@
 # macOS dummy file
 .DS_Store
 
+# Node.js dependencies
+node_modules/
+
+# SvelteKit artifacts
+.svelte-kit/
+
+# Wrangler caches
+.wrangler/
+
+# Vitest reports
+coverage/
+
+# Local logs
+*.log
+
+# Resumable Jikan importer checkpoints
+.jikan-import-cache/
+.mal-import-cache/
+.copyright-cache/
+.annict-cache/
+.x-cache/
+scripts/local/
+
+# Syoboi Calendar importer snapshots
+.syobocal-import-cache/
+
+# Supabase temporary metadata
+supabase/.temp/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+
+
+# ローカル同期(scripts/scheduled)のログ
+.sync-logs/
+
+# ローカル専用の相談資料・下書き（リポジトリには入れない。docs/ の正規ドキュメント *.md は追跡対象のまま）
+docs/*.pptx
+docs/*.ndjson
+docs/advisor-brief-*.md
+docs/professor-*.md
+
+# 個人の VS Code ワークスペース設定
+*.code-workspace
+
 # Personal references
 refs/
