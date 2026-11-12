@@ -22,6 +22,7 @@
   const ATTR_ANIM = 'data-tcs-anim';
   const ATTR_HIDE = 'data-tcs-hide';
   const ATTR_PATH = 'data-tcs-path';
+  const ATTR_INNER = 'data-tcs-inner';
   const GAP = 12; // ヘッダーとカードの隙間
   const HUD_SPACE = 72; // 画面下の操作バー分の余白
   const MIN_CARD_HEIGHT = 16; // これ未満の高さのセルはカードとして扱わない
@@ -178,6 +179,7 @@
   // Xの要素は React が管理しており DOM から取り除くと再描画が破綻するため、属性を付けて CSS の display:none で非表示にする
   let hiddenEls = new Set();
   let pathEls = new Set();
+  let innerEls = new Set();
 
   /** #layers はモーダル・メニュー・トーストの描画先のため、それを含む要素は非表示にしない */
   function mustKeep(el, layers) {
@@ -193,11 +195,13 @@
   /**
    * タイムラインのセル群から #react-root までの祖先経路を求め、経路上にない兄弟要素を全て非表示にする。
    * 経路上の祖先には ATTR_PATH を付け、左右のカラムが消えた分の幅をタイムラインの中央寄せに使う。
+   * セル群から primaryColumn までの間の要素には ATTR_INNER を付け、横幅の上限を外す。
    * 非アクティブ時は空集合と同期し、付けた属性を全て外す
    */
   function isolateTimeline() {
     const hide = new Set();
     const path = new Set();
+    const inner = new Set();
     const col = column();
     const cell = st.active ? col?.querySelector(SEL.cell) : null;
     const stop = document.getElementById('react-root') || document.body;
@@ -209,10 +213,12 @@
         }
       }
       for (let n = col.parentElement; n && n !== stop; n = n.parentElement) path.add(n);
+      for (let n = cell.parentElement; n && n !== col; n = n.parentElement) inner.add(n);
     }
     const changed = hide.size !== hiddenEls.size || [...hide].some((el) => !hiddenEls.has(el));
     hiddenEls = syncAttr(hiddenEls, hide, ATTR_HIDE);
     pathEls = syncAttr(pathEls, path, ATTR_PATH);
+    innerEls = syncAttr(innerEls, inner, ATTR_INNER);
     if (changed) {
       // 非表示にした要素の分だけカードの位置とヘッダー高さが変わるため、計測値を破棄して再配置させる
       st.header.at = -1e9;

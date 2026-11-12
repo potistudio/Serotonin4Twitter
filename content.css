@@ -82,8 +82,17 @@ html[data-tcs="on"] [data-tcs-path] {
   width: 100% !important;
   max-width: none !important;
 }
+/* X は primaryColumn に max-width: 600px を付けるため、カード表示中は上限を --tcs-column-width に置き換える */
 html[data-tcs="on"] [data-testid="primaryColumn"] {
   margin-inline: auto !important;
+  width: 100% !important;
+  max-width: var(--tcs-column-width, 800px) !important;
+}
+/* primaryColumn の内側の入れ物にも横幅の上限が付く場合があるため、セル群までの間の要素（content.js が
+   data-tcs-inner を付ける）とセル自体の上限を外し、列の幅いっぱいに広げる */
+html[data-tcs="on"] [data-tcs-inner],
+html[data-tcs="on"] [data-testid="primaryColumn"] [data-testid="cellInnerDiv"] {
+  max-width: none !important;
 }
 
 /* タイムラインの左右の枠線を消す。X は primaryColumn とその内側の入れ物に左右の border を付けるため、
