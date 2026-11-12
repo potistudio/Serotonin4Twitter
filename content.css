@@ -10,6 +10,11 @@ html[data-tcs="on"] [data-tcs-current] {
   z-index: 1;
 }
 
+/* 最上段のポストを画面中央に置けるように、セル群の上端へ余白を足す（量は content.js が --tcs-top-pad に入れる） */
+html[data-tcs="on"] [data-testid="primaryColumn"] :has(> [data-testid="cellInnerDiv"]) {
+  margin-top: var(--tcs-top-pad, 0px);
+}
+
 /* カードの見た目（cellInnerDiv 本体は transform で位置決めされとるから、子要素に当てる） */
 html[data-tcs="on"] [data-tcs-current] > div {
   border-radius: 16px;

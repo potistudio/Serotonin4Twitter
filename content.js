@@ -42,6 +42,7 @@
     wheel: { busy: null, dir: 0, accum: 0, lastAbs: 0, timer: 0 },
     touch: null,
     themeKey: '',
+    topPad: 0, // タイムライン上端に足した余白(px)
   };
   const now = () => performance.now();
 
@@ -171,6 +172,26 @@
     window.scrollTo({ top: window.scrollY + dy, behavior: 'instant' });
   }
 
+  /** タイムライン上端の余白を設定する（最上段のポストを中央に置くため） */
+  function setTopPad(px) {
+    st.topPad = Math.max(0, Math.round(px));
+    if (st.topPad) root.style.setProperty('--tcs-top-pad', `${st.topPad}px`);
+    else root.style.removeProperty('--tcs-top-pad');
+  }
+
+  /**
+   * dy だけスクロールする。scrollY が 0 を下回る分（最上段のポストを中央へ置くのに足りない分）は、
+   * タイムライン上端に余白を足して賄う
+   */
+  function scrollWithRoom(dy) {
+    const missing = -(window.scrollY + dy);
+    if (missing > 0.5) {
+      setTopPad(st.topPad + missing);
+      dy += missing; // 余白の分だけカードが下がるので、必要なスクロール量も同じだけ減る
+    }
+    scrollByY(dy);
+  }
+
   /** 収まるカードは中央寄せ、デカいカードは上端（戻るときは下端）合わせ */
   function align(el, mode = 'top') {
     const r = el.getBoundingClientRect();
@@ -179,7 +200,7 @@
     if (r.height <= b.avail) dy = r.top - (b.top + (b.avail - r.height) / 2);
     else if (mode === 'bottom') dy = r.bottom - b.bottom;
     else dy = r.top - b.top;
-    scrollByY(dy);
+    scrollWithRoom(dy);
     st.lastAlignAt = now();
   }
 
@@ -195,7 +216,7 @@
     if (r.bottom < 0 || r.top > window.innerHeight) return pickInitial();
     if (r.height <= b.avail) {
       const want = b.top + (b.avail - r.height) / 2;
-      if (Math.abs(r.top - want) > 3) scrollByY(r.top - want);
+      if (Math.abs(r.top - want) > 3) scrollWithRoom(r.top - want);
     } else if (r.top > b.top + 2) {
       scrollByY(r.top - b.top);
     } else if (r.bottom < b.bottom - 2) {
@@ -494,12 +515,14 @@
     st.active = false;
     st.loading = false;
     root.removeAttribute('data-tcs');
+    setTopPad(0);
     clearCurrent();
   }
 
   function evaluate() {
     if (location.href !== st.href) {
       st.href = location.href;
+      setTopPad(0);
       clearCurrent();
       st.header.at = -1e9;
     }
