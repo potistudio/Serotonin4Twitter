@@ -1,24 +1,21 @@
 {
   "manifest_version": 3,
-  "name": "TL Card Slider",
+  "name": "Serotonin for Twitter",
   "version": "1.0.0",
-  "description": "X（Twitter）のタイムラインを、スクロールではなく1枚ずつのカードで表示します。",
-  "permissions": ["storage"],
+  "description": "Twitterのタイムラインを、スクロールではなく1枚ずつのカードで表示します。",
+  "permissions": [ "storage" ],
   "content_scripts": [
     {
       "matches": [
-        "https://x.com/*",
-        "https://twitter.com/*",
-        "https://mobile.x.com/*",
-        "https://mobile.twitter.com/*"
+        "https://x.com/*"
       ],
-      "js": ["content.js"],
-      "css": ["content.css"],
+      "js": [ "content.js" ],
+      "css": [ "content.css" ],
       "run_at": "document_idle"
     }
   ],
   "action": {
-    "default_title": "TL Card Slider",
+    "default_title": "Serotonin for Twitter",
     "default_popup": "popup.html",
     "default_icon": {
       "16": "icons/icon16.png",

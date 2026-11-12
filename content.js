@@ -1,5 +1,5 @@
 /*
- * TL Card Slider - content script
+ * Serotonin for Twitter - content script
  *
  * 方針:
  *  - Xの本物のDOMをそのまま使う（クローンせえへんから、いいね・RP・リプ・画像クリックも普通に効く）
@@ -524,9 +524,8 @@
     const [r, g, b, a = 1] = (bg.match(/[\d.]+/g) || []).map(Number);
     const transparent = r === undefined || a === 0;
     const dark = !transparent && 0.299 * r + 0.587 * g + 0.114 * b < 128;
-    dyn.textContent = `:root{--tcs-card-bg:${transparent ? '#fff' : bg};--tcs-line:${
-      dark ? 'rgba(255,255,255,.16)' : 'rgba(15,20,25,.10)'
-    };--tcs-shadow:${dark ? 'rgba(0,0,0,.65)' : 'rgba(15,20,25,.16)'};}`;
+    dyn.textContent = `:root{--tcs-card-bg:${transparent ? '#fff' : bg};--tcs-line:${dark ? 'rgba(255,255,255,.16)' : 'rgba(15,20,25,.10)'
+      };--tcs-shadow:${dark ? 'rgba(0,0,0,.65)' : 'rgba(15,20,25,.16)'};}`;
     hud.setDark(dark);
   }
 
