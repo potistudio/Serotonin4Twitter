@@ -72,7 +72,19 @@ html[data-tcs="on"] [data-tcs-hide],
 html[data-tcs="on"] header[role="banner"],
 html[data-tcs="on"] [data-testid="sidebarColumn"],
 html[data-tcs="on"] [data-testid="BottomBar"],
-html[data-tcs="on"] [data-testid="DMDrawer"] {
+html[data-tcs="on"] [data-testid="DMDrawer"],
+html[data-tcs="on"] [data-testid="DMDrawerHeader"],
+html[data-tcs="on"] [data-testid="GrokDrawer"],
+html[data-tcs="on"] a[href="/messages"],
+html[data-tcs="on"] a[href^="/messages/"],
+html[data-tcs="on"] [data-tcs-float],
+/* DM/Grokは本体だけ消しても外側のfixed枠が残ることがあるため、親要素の型を問わず上まで消す */
+html[data-tcs="on"] *:has(> [data-testid="DMDrawer"]),
+html[data-tcs="on"] *:has(> [data-testid="GrokDrawer"]),
+html[data-tcs="on"] *:has(> [data-testid="DMDrawerHeader"]),
+html[data-tcs="on"] *:has(> * > [data-testid="DMDrawer"]),
+html[data-tcs="on"] *:has(> * > [data-testid="GrokDrawer"]),
+html[data-tcs="on"] *:has(> * > [data-testid="DMDrawerHeader"]) {
   display: none !important;
 }
 

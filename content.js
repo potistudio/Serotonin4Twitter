@@ -21,6 +21,7 @@
   const ATTR_CUR = 'data-tcs-current';
   const ATTR_ANIM = 'data-tcs-anim';
   const ATTR_HIDE = 'data-tcs-hide';
+  const ATTR_FLOAT = 'data-tcs-float';
   const ATTR_PATH = 'data-tcs-path';
   const ATTR_INNER = 'data-tcs-inner';
   const GAP = 12; // ヘッダーとカードの隙間
@@ -191,6 +192,110 @@
     for (const el of next) if (!prev.has(el)) el.setAttribute(attr, '');
     return next;
   }
+
+  /* 右下フローティング（DM/Grok等）を隠す。Xは本体の外にfixed枠を残すため、
+     既知testidから外側へ登って最小の枠ごと data-tcs-float + inline非表示にする。
+     CSSだけではinline !importantに負けるためJSで直接display:noneを当てる。
+     React再描画で消えるため evaluate/tick のたびに付け直す */
+  function hideEl(el) {
+    try {
+      el.setAttribute(ATTR_FLOAT, '');
+      el.style.setProperty('display', 'none', 'important');
+      el.style.setProperty('visibility', 'hidden', 'important');
+      el.style.setProperty('opacity', '0', 'important');
+      el.style.setProperty('pointer-events', 'none', 'important');
+    } catch { /* noop */ }
+  }
+  function clearFloaters() {
+    for (const el of document.querySelectorAll(`[${ATTR_FLOAT}]`)) {
+      el.removeAttribute(ATTR_FLOAT);
+      try {
+        el.style.removeProperty('display');
+        el.style.removeProperty('visibility');
+        el.style.removeProperty('opacity');
+        el.style.removeProperty('pointer-events');
+      } catch { /* noop */ }
+    }
+  }
+  function tagFloaters() {
+    if (!st.active) return;
+    const main = document.querySelector('main');
+    const col = column();
+    const skipSel = '#tcs-hud, [data-testid="primaryColumn"], [data-testid="sidebarColumn"], header[role="banner"], [role="dialog"], [aria-modal="true"]';
+    let known;
+    try {
+      known = document.querySelectorAll(
+        '[data-testid="DMDrawer"], [data-testid="DMDrawerHeader"], [data-testid="GrokDrawer"],' +
+        'a[href="/messages"], a[href^="/messages/"],' +
+        '[aria-label="Messages"], [aria-label="\u30e1\u30c3\u30bb\u30fc\u30b8"],' +
+        '[data-testid*="DMDrawer" i], [data-testid*="GrokDrawer" i], [data-testid*="MessagesDock" i]'
+      );
+    } catch { known = []; }
+    for (const el of known) {
+      try { if (el.closest(skipSel)) continue; } catch { /* noop */ }
+      hideEl(el);
+      let target = el;
+      let cur = el.parentElement;
+      for (let i = 0; i < 8 && cur && cur !== document.body && cur !== document.documentElement; i++) {
+        try {
+          if (cur.id === 'react-root' || (main && cur.contains(main))) break;
+          if (cur.closest?.('[data-testid="primaryColumn"]')) break;
+        } catch { break; }
+        const r = cur.getBoundingClientRect();
+        if (r.width > 420 || r.height > 500) break;
+        target = cur;
+        try { if (getComputedStyle(cur).position === 'fixed') break; } catch { /* noop */ }
+        cur = cur.parentElement;
+      }
+      hideEl(target);
+    }
+    // 位置ベースの保険: 右下にfixedで居座る小さな箱を隠す
+    try {
+      if (!main) return;
+      for (const el of document.body.querySelectorAll('button, a, [role="button"], [data-testid]')) {
+        try { if (el.closest('#tcs-hud, [data-testid="primaryColumn"], [data-testid="sidebarColumn"], header[role="banner"], [role="dialog"], [aria-modal="true"], [data-tcs-float]')) continue; } catch { continue; }
+        let fixed = null;
+        let n = el;
+        for (let i = 0; i < 6 && n && n !== document.body; i++) {
+          try { if (getComputedStyle(n).position === 'fixed') { fixed = n; break; } } catch { /* noop */ }
+          n = n.parentElement;
+        }
+        if (!fixed) continue;
+        try { if (fixed.contains(main)) continue; } catch { /* noop */ }
+        try { if (col && fixed.contains(col)) continue; } catch { /* noop */ }
+        const r = fixed.getBoundingClientRect();
+        if (!r.width || !r.height || r.width > 380 || r.height > 450) continue;
+        if (r.right < window.innerWidth - 160) continue;
+        if (!(r.bottom > window.innerHeight - 420)) continue;
+        hideEl(fixed);
+      }
+    } catch { /* noop */ }
+  }
+  // DevTools用: コンソールで __tcsFloatDebug() を呼ぶと右下候補の一覧が出る
+  try {
+    window.__tcsFloatDebug = () => {
+      const out = [];
+      for (const el of document.querySelectorAll('[data-testid], a[href^="/messages"], button, [role="button"]')) {
+        try {
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height) continue;
+          if (r.right < window.innerWidth - 300) continue;
+          if (!(r.bottom > window.innerHeight - 500)) continue;
+          out.push({
+            tag: el.tagName,
+            testid: el.getAttribute('data-testid'),
+            aria: el.getAttribute('aria-label'),
+            href: el.getAttribute?.('href'),
+            text: (el.textContent || '').slice(0, 40),
+            rect: { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width), h: Math.round(r.height) },
+            fixed: (() => { let n = el; for (let i = 0; i < 6 && n; i++) { try { if (getComputedStyle(n).position === 'fixed') return n.tagName + '.' + (n.className || '').toString().slice(0, 40); } catch { /* noop */ } n = n.parentElement; } return ''; })(),
+          });
+        } catch { /* noop */ }
+      }
+      console.table(out);
+      return out;
+    };
+  } catch { /* noop */ }
 
   /**
    * タイムラインのセル群から #react-root までの祖先経路を求め、経路上にない兄弟要素を全て非表示にする。
@@ -447,7 +552,7 @@
   }
   function shouldIgnore(t) {
     if (modalOpen()) return true;
-    if (t?.closest?.('#layers, [data-testid="DMDrawer"]')) return true;
+    if (t?.closest?.('#layers, [data-testid="DMDrawer"], [data-testid="GrokDrawer"], [data-tcs-float]')) return true;
     return hasScrollableAncestor(t);
   }
 
@@ -572,6 +677,7 @@
     st.active = true;
     root.setAttribute('data-tcs', 'on');
     isolateTimeline();
+    tagFloaters();
     st.header.at = -1e9;
     pickInitial();
   }
@@ -580,6 +686,7 @@
     st.loading = false;
     root.removeAttribute('data-tcs');
     isolateTimeline();
+    clearFloaters();
     setTopPad(0);
     clearCurrent();
   }
@@ -598,6 +705,7 @@
     else if (want) {
       // X はルート遷移や追加読み込みで要素を差し替えるため、毎回非表示対象を求め直す
       isolateTimeline();
+      tagFloaters();
       if (!st.loading && !st.current?.isConnected) pickInitial();
     }
     hud.setVisible(eligible);
@@ -734,6 +842,7 @@
     if (document.hidden) return;
     updateTheme();
     evaluate();
+    tagFloaters();
     hud.place();
     keepAligned();
   }

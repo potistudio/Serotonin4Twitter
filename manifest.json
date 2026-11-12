@@ -3,14 +3,21 @@
   "name": "Serotonin for Twitter",
   "version": "1.0.0",
   "description": "Twitterのタイムラインを、スクロールではなく1枚ずつのカードで表示します。",
-  "permissions": [ "storage" ],
+  "permissions": [
+    "storage"
+  ],
   "content_scripts": [
     {
       "matches": [
-        "https://x.com/*"
+        "https://x.com/*",
+        "https://twitter.com/*"
       ],
-      "js": [ "content.js" ],
-      "css": [ "content.css" ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ],
       "run_at": "document_idle"
     }
   ],
