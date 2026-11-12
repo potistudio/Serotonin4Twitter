@@ -22,6 +22,7 @@
   const ATTR_ANIM = 'data-tcs-anim';
   const GAP = 12; // ヘッダーとカードの隙間
   const HUD_SPACE = 72; // 画面下の操作バー分の余白
+  const MIN_CARD_HEIGHT = 16; // これ未満の高さのセルはカードとして扱わない
   const root = document.documentElement;
   const store = globalThis.chrome?.storage;
 
@@ -106,7 +107,8 @@
     for (const el of col.querySelectorAll(SEL.cell)) {
       if (!el.querySelector(SEL.tweet)) continue;
       const r = el.getBoundingClientRect();
-      if (r.height < 1) continue;
+      // 広告セルは article を持ったまま高さ 1px に潰れる。表示できないため対象から除く
+      if (r.height < MIN_CARD_HEIGHT) continue;
       out.push({ el, top: r.top + sy, bottom: r.bottom + sy });
     }
     return out.sort((a, b) => a.top - b.top);
