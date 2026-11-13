@@ -24,6 +24,16 @@ html[data-tcs="on"] [data-tcs-current] > div {
     0 14px 36px var(--tcs-shadow, rgba(15, 20, 25, 0.16));
 }
 
+/* 角をスクワークル（滑らかに繋がる角）にする。corner-shape は背景・枠線・影・overflow の切り抜きの全てに適用される。
+   同じ半径だと円弧の角より小さく見えるため、半径を大きくして見た目の大きさを揃える。
+   corner-shape 未対応のブラウザでは上の円弧の角のまま */
+@supports (corner-shape: squircle) {
+  html[data-tcs="on"] [data-tcs-current] > div {
+    border-radius: 24px;
+    corner-shape: squircle;
+  }
+}
+
 /* ---- 出現アニメーション ---- */
 [data-tcs-anim] {
   animation-duration: 0.3s;
